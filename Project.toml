@@ -1,0 +1,7 @@
+name = "TypeInspections"
+uuid = "207f1e7e-dff0-4ea2-96da-cf0d0722f841"
+authors = ["Charles Kawczynski <kawczynski.charles@gmail.com>"]
+version = "0.1.0"
+
+[deps]
+Crayons = "a8cc5b0e-0ffa-5ad4-8c14-923d3ee1735f"
