@@ -28,10 +28,39 @@ function apply(f, ::Type{T}) where {T}
     return match_list
 end
 
+recursively_concrete(::Int64) = true
+
+# The first type parameter of NamedTuple's are
+# Symbols, which are technically references but,
+# being in the type space, this won't generally result
+# in runtime inference.
+recursively_concrete(::T) where {T <: NamedTuple} =
+    recursively_concrete_nt_vals(T.parameters[2])
+recursively_concrete_nt_vals(::Symbol) = false
+recursively_concrete_nt_vals(::T) where {T <: Tuple} =
+    all(p-> recursively_concrete_nt_vals(p), T.parameters)
+
+recursively_concrete(::T) where {T <: Tuple} =
+    all(p-> recursively_concrete(p), T.parameters)
+
+function recursively_concrete(::Type{T}) where {T}
+    @show T, !(T <: Union)
+    return isconcretetype(T)
+    # return !(T <: Union)
+end
+
 function isconcretetype_params(::Type{T}) where {T}
     params = T.parameters
     isempty(params) && return true
-    return all(p-> isconcretetype(p), params)
+    concrete_children = true
+    for p in params
+        if !recursively_concrete(p)
+            @show T, p
+            concrete_children = false
+        end
+    end
+    return concrete_children
+    # return all(p-> !recursively_concrete(p), params)
 end
 
 ith_name(i::Int) =
