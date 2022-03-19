@@ -71,4 +71,43 @@ function warntype_param(::Type{T}) where {T}
     end
 end
 
+
+"""
+    whose_type_parameter(::Type{T}, ::Type{FindType})
+
+Finds where a type, `FindType` exists in the type-parameter
+space of a complicated (and potentially nested) type `T`.
+
+# Example
+```julia
+struct ComplicatedAndMaybeNestedFoo{A,B,C} end
+struct Bar end
+struct Baz end
+struct Bingo end
+f = ComplicatedAndMaybeNestedFoo{Bar, Baz, Bingo}()
+whose_type_parameter(typeof(f), Bingo) # returns [(ComplicatedAndMaybeNestedFoo, 3)]
+```
+"""
+function whose_type_parameter(::Type{T}, ::Type{FindType}) where {T, FindType}
+    candidates = []
+    whose_type_parameter!(candidates, T, FindType)
+    return candidates
+end
+
+function whose_type_parameter!(candidates, ::Type{T}, ::Type{FindType}) where {T, FindType}
+    if isempty(T.parameters)
+        return
+    else
+        for (i, param) in enumerate(T.parameters)
+            if param isa Type
+                if param == FindType
+                    push!(candidates, (nameof(T), i))
+                else
+                    whose_type_parameter!(candidates, param, FindType)
+                end
+            end
+        end
+    end
+end
+
 end # module
